@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../App';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -17,6 +20,8 @@ export default function SignUpScreen() {
   const [username, setUsername] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
+  const navigation =
+  useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleSignUp = async () => {
     if (!username.trim()) {
@@ -43,6 +48,7 @@ export default function SignUpScreen() {
 
       // Username is valid — proceed
       console.log('Valid GitHub username:', username);
+       navigation.navigate('Map');
     } catch (error) {
       Alert.alert('Network error. Please check your connection.');
     } finally {
