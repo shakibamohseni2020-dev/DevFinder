@@ -1,3 +1,4 @@
+import { saveUsername } from '../storage/usernameStorage';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -46,9 +47,12 @@ export default function SignUpScreen() {
         return;
       }
 
-      // Username is valid — proceed
-      console.log('Valid GitHub username:', username);
-       navigation.navigate('Map');
+            // Username is valid — save it and proceed
+      await saveUsername(username.trim());
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Map' }],
+      });
     } catch (error) {
       Alert.alert('Network error. Please check your connection.');
     } finally {

@@ -1,3 +1,4 @@
+import { clearUsername } from '../storage/usernameStorage';
 import {
   Image,
   StyleSheet,
@@ -18,10 +19,13 @@ import type { RootStackParamList } from '../../App';
 export default function MapScreen() {
     const navigation =
   useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const handleLogout = () => {
-    // TODO: clear stored username and return to SignUpScreen
-    console.log('Logout tapped');
-  };
+  const handleLogout = async () => {
+  await clearUsername();
+  navigation.reset({
+    index: 0,
+    routes: [{ name: 'SignUp' }],
+  });
+};
 
   const handleUserPress = (username: string) => {
     navigation.navigate('Profile', { username });
