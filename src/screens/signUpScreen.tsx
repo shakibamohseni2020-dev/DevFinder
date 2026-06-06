@@ -16,12 +16,38 @@ import { colors } from '../theme/colors';
 export default function SignUpScreen() {
   const [username, setUsername] = useState('');
 
-  const handleSignUp = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignUp = async () => {
     if (!username.trim()) {
       Alert.alert('Please enter a GitHub username.');
       return;
     }
-    console.log('Signed up with username:', username);
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(
+        `https://api.github.com/users/${username.trim()}`,
+      );
+
+      if (response.status === 404) {
+        Alert.alert('There is no such username on GitHub.');
+        return;
+      }
+
+      if (!response.ok) {
+        Alert.alert('Could not verify the username. Please try again.');
+        return;
+      }
+
+      // Username is valid — proceed
+      console.log('Valid GitHub username:', username);
+    } catch (error) {
+      Alert.alert('Network error. Please check your connection.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -52,9 +78,15 @@ export default function SignUpScreen() {
             autoCapitalize="none"
             autoCorrect={false}
           />
-          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-            <Text style={styles.buttonText}>Sign Up</Text>
-          </TouchableOpacity>
+          <TouchableOpacity
+          style={[styles.button, isLoading && styles.buttonDisabled]}
+          onPress={handleSignUp}
+          disabled={isLoading}
+          >
+  <Text style={styles.buttonText}>
+    {isLoading ? 'Checking...' : 'Sign Up'}
+  </Text>
+</TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -95,5 +127,8 @@ const styles = StyleSheet.create({
     color: colors.primaryText,
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonDisabled: {
+  opacity: 0.6,
   },
 });
