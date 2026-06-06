@@ -9,17 +9,22 @@ import MapView, { Callout, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { mockUsers } from '../data/users';
 import { colors } from '../theme/colors';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../App';
 
  //Main screen showing all developers in the community on a map.
 
 export default function MapScreen() {
+    const navigation =
+  useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const handleLogout = () => {
     // TODO: clear stored username and return to SignUpScreen
     console.log('Logout tapped');
   };
 
   const handleUserPress = (username: string) => {
-    
+    navigation.navigate('Profile', { username });
     console.log('User tapped:', username);
   };
 
