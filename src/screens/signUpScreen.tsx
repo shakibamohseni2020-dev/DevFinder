@@ -1,8 +1,7 @@
-import { saveUsername } from '../storage/usernameStorage';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../App';
+import * as Location from 'expo-location';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,18 +13,21 @@ import {
   View,
 } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import type { RootStackParamList } from '../../App';
+import { registerUser } from '../services/api';
+import { saveUsername } from '../storage/usernameStorage';
 import { colors } from '../theme/colors';
 
- //Welcome screen shown to first-time users.
 export default function SignUpScreen() {
   const [username, setUsername] = useState('');
-
   const [isLoading, setIsLoading] = useState(false);
   const navigation =
-  useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleSignUp = async () => {
-    if (!username.trim()) {
+    const trimmedUsername = username.trim();
+
+    if (!trimmedUsername) {
       Alert.alert('Please enter a GitHub username.');
       return;
     }
@@ -33,28 +35,56 @@ export default function SignUpScreen() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        `https://api.github.com/users/${username.trim()}`,
+      const githubResponse = await fetch(
+        `https://api.github.com/users/${trimmedUsername}`,
       );
 
-      if (response.status === 404) {
+      if (githubResponse.status === 404) {
         Alert.alert('There is no such username on GitHub.');
         return;
       }
 
-      if (!response.ok) {
+      if (!githubResponse.ok) {
         Alert.alert('Could not verify the username. Please try again.');
         return;
       }
 
-            // Username is valid — save it and proceed
-      await saveUsername(username.trim());
+      const githubProfile = await githubResponse.json();
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Location required',
+          'DevFinder needs your location to place you on the map.',
+        );
+        return;
+      }
+
+      const position = await Location.getCurrentPositionAsync({});
+
+      await registerUser({
+        username: trimmedUsername,
+        name: githubProfile.name || trimmedUsername,
+        bio: githubProfile.bio || '',
+        avatarUrl: githubProfile.avatar_url,
+        location: {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        },
+      });
+
+      await saveUsername(trimmedUsername);
       navigation.reset({
         index: 0,
         routes: [{ name: 'Map' }],
       });
     } catch (error) {
-      Alert.alert('Network error. Please check your connection.');
+      Alert.alert(
+        'Sign-up failed',
+        'Could not complete sign-up. Please check your connection and try again.',
+      );
+      console.warn('Sign-up error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +92,6 @@ export default function SignUpScreen() {
 
   return (
     <View style={styles.container}>
-      { /* Map background */ }
       <MapView
         style={StyleSheet.absoluteFill}
         provider={PROVIDER_GOOGLE}
@@ -87,16 +116,17 @@ export default function SignUpScreen() {
             onChangeText={setUsername}
             autoCapitalize="none"
             autoCorrect={false}
+            editable={!isLoading}
           />
           <TouchableOpacity
-          style={[styles.button, isLoading && styles.buttonDisabled]}
-          onPress={handleSignUp}
-          disabled={isLoading}
+            style={[styles.button, isLoading && styles.buttonDisabled]}
+            onPress={handleSignUp}
+            disabled={isLoading}
           >
-  <Text style={styles.buttonText}>
-    {isLoading ? 'Checking...' : 'Sign Up'}
-  </Text>
-</TouchableOpacity>
+            <Text style={styles.buttonText}>
+              {isLoading ? 'Signing up...' : 'Sign Up'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -139,6 +169,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   buttonDisabled: {
-  opacity: 0.6,
+    opacity: 0.6,
   },
 });
