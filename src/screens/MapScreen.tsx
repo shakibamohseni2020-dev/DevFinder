@@ -1,4 +1,6 @@
-import { clearUsername } from '../storage/usernameStorage';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useEffect, useState } from 'react';
 import {
   Image,
   StyleSheet,
@@ -8,28 +10,64 @@ import {
 } from 'react-native';
 import MapView, { Callout, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { mockUsers } from '../data/users';
-import { colors } from '../theme/colors';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
+import { fetchUsers } from '../services/api';
+import {
+  clearUsersCache,
+  loadUsersFromCache,
+  saveUsersToCache,
+} from '../services/userCache';
+import { clearUsername } from '../storage/usernameStorage';
+import { colors } from '../theme/colors';
+import type { User } from '../types/user';
 
- //Main screen showing all developers in the community on a map.
+// Main screen showing all developers in the community on a map.
 
 export default function MapScreen() {
-    const navigation =
-  useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      // 1. Show cached users immediately (if any)
+      const cached = await loadUsersFromCache();
+      if (cached && isMounted) {
+        setUsers(cached);
+      }
+
+      // 2. Fetch fresh users from the backend
+      try {
+        const fresh = await fetchUsers();
+        if (isMounted) {
+          setUsers(fresh);
+          await saveUsersToCache(fresh);
+        }
+      } catch (error) {
+        // If the fetch fails (offline, server down), the cached
+        // data we already rendered remains visible.
+        console.warn('Failed to fetch users:', error);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleLogout = async () => {
-  await clearUsername();
-  navigation.reset({
-    index: 0,
-    routes: [{ name: 'SignUp' }],
-  });
-};
+    await clearUsername();
+    await clearUsersCache();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'SignUp' }],
+    });
+  };
 
   const handleUserPress = (username: string) => {
     navigation.navigate('Profile', { username });
-    console.log('User tapped:', username);
   };
 
   return (
@@ -44,9 +82,9 @@ export default function MapScreen() {
           longitudeDelta: 0.8,
         }}
       >
-        {mockUsers.map((user) => (
+        {users.map((user) => (
           <Marker
-            key={user.username}
+            key={user.id}
             coordinate={user.location}
             anchor={{ x: 0.5, y: 0.5 }}
           >
@@ -61,10 +99,14 @@ export default function MapScreen() {
               tooltip
               onPress={() => handleUserPress(user.username)}
             >
-              <View style={styles.callout}>
+              <TouchableOpacity
+                style={styles.callout}
+                onPress={() => handleUserPress(user.username)}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.calloutName}>{user.name}</Text>
                 <Text style={styles.calloutBio}>{user.bio}</Text>
-              </View>
+              </TouchableOpacity>
             </Callout>
           </Marker>
         ))}

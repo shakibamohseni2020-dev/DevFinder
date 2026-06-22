@@ -1,0 +1,59 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "torvalds",
+      "name": "Linus Torvalds",
+      "bio": "Linux Foundation",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/1024025?v=4",
+      "location": {
+        "latitude": 37.7749,
+        "longitude": -122.4194
+      }
+    },
+    {
+      "id": 2,
+      "username": "gaearon",
+      "name": "Dan Abramov",
+      "bio": "React core team",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/810438?v=4",
+      "location": {
+        "latitude": 37.8044,
+        "longitude": -122.2712
+      }
+    },
+    {
+      "id": 3,
+      "username": "tj",
+      "name": "TJ Holowaychuk",
+      "bio": "Open source maintainer",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/25254?v=4",
+      "location": {
+        "latitude": 37.6688,
+        "longitude": -122.0808
+      }
+    },
+    {
+      "username": "shakibamohseni2020-dev",
+      "name": "Shakiba",
+      "bio": "",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/237481028?v=4",
+      "location": {
+        "latitude": 50.8786081733292,
+        "longitude": -113.97575541407161
+      },
+      "id": 4
+    },
+    {
+      "username": "shakibamohseni2020-dev",
+      "name": "Shakiba",
+      "bio": "",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/237481028?v=4",
+      "location": {
+        "latitude": 50.87860417472627,
+        "longitude": -113.97572968087053
+      },
+      "id": 5
+    }
+  ]
+}
